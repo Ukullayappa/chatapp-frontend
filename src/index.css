@@ -1,0 +1,52 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: #0f0f1a;
+  color: #fff;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Bootstrap dark tab overrides */
+.nav-tabs .nav-link {
+  color: rgba(255, 255, 255, 0.5) !important;
+  border-color: transparent !important;
+}
+.nav-tabs .nav-link.active {
+  color: #fff !important;
+  background: rgba(102, 126, 234, 0.2) !important;
+  border-color: rgba(102, 126, 234, 0.4) !important;
+}
+.nav-tabs .nav-link:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-color: transparent !important;
+}
+
+/* Form control dark override */
+.form-control:focus {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(102, 126, 234, 0.5) !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15) !important;
+  color: #fff !important;
+}
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
