@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Modal, Form } from 'react-bootstrap'
+import { Modal, Form, Button } from 'react-bootstrap'
 import { useRooms } from '../hooks/useRooms'
 import { useOnlineUsers } from '../hooks/useOnlineUsers'
 
@@ -10,152 +10,197 @@ export default function Sidebar({ profile, currentRoom, onSelectRoom, onSignOut 
   const [newRoom, setNewRoom] = useState({ name: '', description: '' })
   const [creating, setCreating] = useState(false)
   const [roomError, setRoomError] = useState('')
+  const [search, setSearch] = useState('')
 
   async function handleCreateRoom(e) {
     e.preventDefault()
     setCreating(true)
     setRoomError('')
     const { error } = await createRoom(newRoom.name, newRoom.description)
-    if (error) {
-      setRoomError(error.message)
-      setCreating(false)
-      return
-    }
+    if (error) { setRoomError(error.message); setCreating(false); return }
     setNewRoom({ name: '', description: '' })
     setShowModal(false)
     setCreating(false)
   }
 
-  const sidebarStyle = {
-    width: '260px',
-    minWidth: '260px',
-    background: '#1a1a2e',
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    borderRight: '1px solid rgba(255,255,255,0.08)'
+  const filtered = rooms.filter(r => r.name.toLowerCase().includes(search.toLowerCase()))
+
+  function avatarColor(name) {
+    const colors = ['#00a884','#25d366','#128c7e','#075e54','#34b7f1','#ef9c0d','#f15c6d']
+    let h = 0
+    for (let i = 0; i < (name?.length || 0); i++) h = (h * 31 + name.charCodeAt(i)) % colors.length
+    return colors[h]
   }
 
   return (
-    <div style={sidebarStyle}>
+    <div style={{
+      width: '380px', minWidth: '380px',
+      background: 'var(--wa-sidebar-bg)',
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      borderRight: '1px solid var(--wa-border)'
+    }}>
       {/* Header */}
-      <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{
+        background: 'var(--wa-header-bg)',
+        padding: '10px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: '59px',
+        flexShrink: 0
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            width: 40, height: 40, borderRadius: '50%',
+            background: avatarColor(profile?.username),
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: '15px', flexShrink: 0
+            color: '#fff', fontWeight: 700, fontSize: '16px', cursor: 'pointer', flexShrink: 0
           }}>
             {profile?.username?.[0]?.toUpperCase()}
           </div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ color: '#fff', fontWeight: 600, fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.username}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>Online</span>
-            </div>
-          </div>
         </div>
-      </div>
 
-      {/* Rooms */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 8px', marginBottom: '4px' }}>
-          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Channels</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             onClick={() => setShowModal(true)}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: 0 }}
-            title="Create channel"
-          >+</button>
-        </div>
-
-        {rooms.map(room => (
-          <button
-            key={room.id}
-            onClick={() => onSelectRoom(room)}
+            title="New group"
             style={{
-              width: '100%', textAlign: 'left',
-              background: currentRoom?.id === room.id ? 'rgba(102,126,234,0.2)' : 'transparent',
-              border: 'none', borderRadius: '8px', padding: '8px 10px',
-              color: currentRoom?.id === room.id ? '#fff' : 'rgba(255,255,255,0.6)',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-              fontSize: '14px', marginBottom: '2px', transition: 'all 0.15s'
+              background: 'none', border: 'none', color: 'var(--wa-text-muted)',
+              cursor: 'pointer', padding: '8px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
+            onMouseOver={e => e.currentTarget.style.background = 'var(--wa-hover)'}
+            onMouseOut={e => e.currentTarget.style.background = 'none'}
           >
-            <span style={{ fontSize: '15px', color: 'rgba(255,255,255,0.4)' }}>#</span>
-            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{room.name}</span>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M19.005 3.175H4.674C3.642 3.175 3 3.789 3 4.821V21.02l3.544-3.514h12.461c1.033 0 2.064-1.06 2.064-2.093V4.821c-.001-1.032-1.032-1.646-2.064-1.646zm-4.989 9.869H13v2.016h-2v-2.016H9v-2h2V9.044h2v2h2.016v2z"/>
+            </svg>
           </button>
-        ))}
 
-        {/* Online users */}
-        <div style={{ padding: '16px 8px 8px', marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Online — {onlineUsers.length}
-          </span>
-          {onlineUsers.slice(0, 8).map(u => (
-            <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0' }}>
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontSize: '11px', fontWeight: 600
-                }}>
-                  {u.username?.[0]?.toUpperCase()}
-                </div>
-                <div style={{ position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: '50%', background: '#22c55e', border: '1.5px solid #1a1a2e' }} />
-              </div>
-              <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.username}</span>
-            </div>
-          ))}
+          <button
+            onClick={onSignOut}
+            title="Sign out"
+            style={{
+              background: 'none', border: 'none', color: 'var(--wa-text-muted)',
+              cursor: 'pointer', padding: '8px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'var(--wa-hover)'}
+            onMouseOut={e => e.currentTarget.style.background = 'none'}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Sign out */}
-      <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <button onClick={onSignOut} style={{
-          width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-          color: 'rgba(255,255,255,0.6)', borderRadius: '8px', padding: '8px', cursor: 'pointer', fontSize: '13px'
+      {/* Search */}
+      <div style={{ padding: '8px 12px', background: 'var(--wa-sidebar-bg)', flexShrink: 0 }}>
+        <div style={{
+          background: 'var(--wa-panel-bg)',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '7px 12px'
         }}>
-          Sign Out
-        </button>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--wa-text-muted)">
+            <path d="M15.009 13.805h-.636l-.22-.219a5.184 5.184 0 0 0 1.256-3.386 5.207 5.207 0 1 0-5.207 5.208 5.183 5.183 0 0 0 3.385-1.255l.221.22v.635l4.004 3.999 1.194-1.195-3.997-4.007zm-4.808 0a3.605 3.605 0 1 1 0-7.21 3.605 3.605 0 0 1 0 7.21z"/>
+          </svg>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search or start new chat"
+            style={{
+              background: 'none', border: 'none', outline: 'none',
+              color: 'var(--wa-text)', fontSize: '14px', flex: 1
+            }}
+          />
+        </div>
       </div>
 
-      {/* Create Channel Modal */}
+      {/* Chat list */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {filtered.map(room => {
+          const isActive = currentRoom?.id === room.id
+          const color = avatarColor(room.name)
+          return (
+            <div
+              key={room.id}
+              onClick={() => onSelectRoom(room)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '13px',
+                padding: '10px 16px',
+                cursor: 'pointer',
+                background: isActive ? 'var(--wa-hover)' : 'transparent',
+                borderBottom: '1px solid var(--wa-border)',
+                transition: 'background 0.1s'
+              }}
+              onMouseOver={e => { if (!isActive) e.currentTarget.style.background = 'var(--wa-hover)' }}
+              onMouseOut={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+            >
+              <div style={{
+                width: 49, height: 49, borderRadius: '50%',
+                background: color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontWeight: 700, fontSize: '18px', flexShrink: 0
+              }}>
+                {room.name[0]?.toUpperCase()}
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                  <span style={{ color: 'var(--wa-text)', fontWeight: 500, fontSize: '17px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {room.name}
+                  </span>
+                </div>
+                <span style={{ color: 'var(--wa-text-muted)', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                  {room.description || 'Tap to open chat'}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Create Group Modal */}
       <Modal show={showModal} onHide={() => { setShowModal(false); setRoomError('') }} centered>
-        <Modal.Header closeButton style={{ background: '#1a1a2e', borderColor: 'rgba(255,255,255,0.1)' }}>
-          <Modal.Title style={{ color: '#fff', fontSize: '16px' }}>Create a Channel</Modal.Title>
+        <Modal.Header closeButton style={{ background: 'var(--wa-panel-bg)', borderColor: 'var(--wa-border)' }}>
+          <Modal.Title style={{ color: 'var(--wa-text)', fontSize: '16px' }}>New Group Chat</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ background: '#1a1a2e' }}>
+        <Modal.Body style={{ background: 'var(--wa-panel-bg)' }}>
           {roomError && <div style={{ color: '#f87171', fontSize: '13px', marginBottom: '12px' }}>{roomError}</div>}
           <Form onSubmit={handleCreateRoom}>
             <Form.Group className="mb-3">
-              <Form.Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px' }}>Channel Name</Form.Label>
+              <Form.Label style={{ color: 'var(--wa-text-muted)', fontSize: '13px' }}>Group Name</Form.Label>
               <Form.Control
                 type="text"
                 placeholder="e.g. project-ideas"
                 value={newRoom.name}
                 onChange={e => setNewRoom({ ...newRoom, name: e.target.value })}
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}
+                style={{ background: 'var(--wa-input-bg)', border: '1px solid var(--wa-border)', color: 'var(--wa-text)' }}
                 required
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px' }}>Description (optional)</Form.Label>
+              <Form.Label style={{ color: 'var(--wa-text-muted)', fontSize: '13px' }}>Description (optional)</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="What's this channel about?"
+                placeholder="What's this group about?"
                 value={newRoom.description}
                 onChange={e => setNewRoom({ ...newRoom, description: e.target.value })}
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}
+                style={{ background: 'var(--wa-input-bg)', border: '1px solid var(--wa-border)', color: 'var(--wa-text)' }}
               />
             </Form.Group>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <Button variant="secondary" onClick={() => { setShowModal(false); setRoomError('') }}>Cancel</Button>
-              <Button type="submit" disabled={creating}
-                style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', border: 'none' }}>
-                {creating ? 'Creating...' : 'Create Channel'}
+              <Button type="submit" disabled={creating} style={{ background: 'var(--wa-green)', border: 'none' }}>
+                {creating ? 'Creating...' : 'Create Group'}
               </Button>
             </div>
           </Form>
