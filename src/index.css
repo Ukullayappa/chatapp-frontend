@@ -4,49 +4,56 @@
   padding: 0;
 }
 
+:root {
+  --wa-green: #00a884;
+  --wa-green-dark: #008069;
+  --wa-green-light: #d9fdd3;
+  --wa-bg: #111b21;
+  --wa-sidebar-bg: #111b21;
+  --wa-panel-bg: #202c33;
+  --wa-chat-bg: #0b141a;
+  --wa-bubble-out: #005c4b;
+  --wa-bubble-in: #202c33;
+  --wa-text: #e9edef;
+  --wa-text-muted: #8696a0;
+  --wa-border: #2a3942;
+  --wa-input-bg: #2a3942;
+  --wa-hover: #2a3942;
+  --wa-header-bg: #202c33;
+  --wa-tick: #53bdeb;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: #0f0f1a;
-  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--wa-bg);
+  color: var(--wa-text);
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-/* Bootstrap dark tab overrides */
 .nav-tabs .nav-link {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: var(--wa-text-muted) !important;
   border-color: transparent !important;
 }
 .nav-tabs .nav-link.active {
-  color: #fff !important;
-  background: rgba(102, 126, 234, 0.2) !important;
-  border-color: rgba(102, 126, 234, 0.4) !important;
+  color: var(--wa-green) !important;
+  background: transparent !important;
+  border-bottom-color: var(--wa-green) !important;
 }
-.nav-tabs .nav-link:hover {
-  color: rgba(255, 255, 255, 0.8) !important;
-  border-color: transparent !important;
+.nav-tabs {
+  border-bottom-color: var(--wa-border) !important;
 }
-
-/* Form control dark override */
 .form-control:focus {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(102, 126, 234, 0.5) !important;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15) !important;
-  color: #fff !important;
+  background: var(--wa-input-bg) !important;
+  border-color: var(--wa-green) !important;
+  box-shadow: none !important;
+  color: var(--wa-text) !important;
 }
 .form-control::placeholder {
-  color: rgba(255, 255, 255, 0.3) !important;
+  color: var(--wa-text-muted) !important;
 }
