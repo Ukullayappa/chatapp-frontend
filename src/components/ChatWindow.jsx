@@ -24,7 +24,7 @@ function avatarColor(name) {
   return colors[h]
 }
 
-export default function ChatWindow({ room, profile }) {
+export default function ChatWindow({ room, profile, onBack, isMobile = false }) {
   const { messages, loading, sendMessage } = useMessages(room?.id)
   const { onlineUsers } = useOnlineUsers()
   const [text, setText] = useState('')
@@ -62,7 +62,7 @@ export default function ChatWindow({ room, profile }) {
   function handleTextChange(e) {
     setText(e.target.value)
     const el = textareaRef.current
-    if (el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px' }
+    if (el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px' }
     if (!room) return
     const token = localStorage.getItem('chatapp_token')
     const socket = getSocket(token)
@@ -102,6 +102,7 @@ export default function ChatWindow({ room, profile }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
+  // Empty state (desktop only — mobile never shows this because we always show sidebar first)
   if (!room) {
     return (
       <div style={{
@@ -109,7 +110,7 @@ export default function ChatWindow({ room, profile }) {
         alignItems: 'center', justifyContent: 'center',
         background: 'var(--chat-bg)',
       }}>
-        <div style={{ textAlign: 'center', maxWidth: 340 }}>
+        <div style={{ textAlign: 'center', maxWidth: 320 }}>
           <div style={{
             width: 80, height: 80, borderRadius: 24,
             background: 'linear-gradient(135deg, var(--primary), #7c3aed)',
@@ -125,23 +126,8 @@ export default function ChatWindow({ room, profile }) {
             Select a Room
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>
-            Choose a room from the sidebar to start chatting with your team.
+            Choose a room from the sidebar to start chatting.
           </p>
-          <div style={{
-            marginTop: 24, display: 'flex', gap: 16, justifyContent: 'center'
-          }}>
-            {['💬','🚀','✨'].map((emoji, i) => (
-              <div key={i} style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: '#fff', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontSize: 20,
-                boxShadow: 'var(--shadow-sm)',
-                border: '1px solid var(--border)'
-              }}>
-                {emoji}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     )
@@ -153,34 +139,60 @@ export default function ChatWindow({ room, profile }) {
   return (
     <div style={{
       flex: 1, display: 'flex', flexDirection: 'column',
-      background: 'var(--chat-bg)', height: '100vh', overflow: 'hidden'
+      background: 'var(--chat-bg)', height: '100vh', overflow: 'hidden',
+      width: isMobile ? '100%' : undefined
     }}>
       {/* Header */}
       <div style={{
         background: 'var(--header-bg)',
-        padding: '12px 20px',
-        display: 'flex', alignItems: 'center', gap: 14,
+        padding: isMobile ? '10px 14px' : '12px 20px',
+        display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 14,
         flexShrink: 0,
         borderBottom: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-sm)'
+        boxShadow: 'var(--shadow-sm)',
+        minHeight: isMobile ? 62 : 66
       }}>
+        {/* Back button on mobile */}
+        {isMobile && (
+          <button
+            onClick={onBack}
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'var(--hover)', border: 'none',
+              color: 'var(--text)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, transition: 'all 0.15s'
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          </button>
+        )}
+
         <div style={{
-          width: 42, height: 42, borderRadius: 14,
+          width: isMobile ? 38 : 42, height: isMobile ? 38 : 42,
+          borderRadius: isMobile ? 12 : 14,
           background: `linear-gradient(135deg, ${color}cc, ${color})`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0,
-          boxShadow: `0 4px 12px ${color}40`
+          color: '#fff', fontWeight: 700, fontSize: isMobile ? 15 : 16,
+          flexShrink: 0, boxShadow: `0 4px 12px ${color}40`
         }}>
           {room.name[0]?.toUpperCase()}
         </div>
+
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{
+            fontWeight: 700, fontSize: isMobile ? 16 : 15,
+            color: 'var(--text)', letterSpacing: '-0.01em',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+          }}>
             {room.name}
           </div>
-          <div style={{ fontSize: 12, color: typingUsers.length > 0 ? 'var(--primary)' : 'var(--text-muted)', marginTop: 1, height: 16 }}>
+          <div style={{ fontSize: 12, color: typingUsers.length > 0 ? 'var(--primary)' : 'var(--text-muted)', marginTop: 1 }}>
             {typingUsers.length > 0 ? (
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ display: 'flex', gap: 2 }}>
+                <span style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                   {[0, 0.2, 0.4].map((delay, i) => (
                     <span key={i} style={{
                       width: 4, height: 4, borderRadius: '50%', background: 'var(--primary)',
@@ -197,31 +209,33 @@ export default function ChatWindow({ room, profile }) {
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div style={{ display: 'flex', gap: 4 }}>
-          {[
-            { icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>, title: 'Search' },
-            { icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>, title: 'More' }
-          ].map(({ icon, title }, i) => (
-            <button key={i} title={title} style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: 'transparent', border: 'none',
-              color: 'var(--text-muted)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.15s'
-            }}
-              onMouseOver={e => { e.currentTarget.style.background = 'var(--hover)'; e.currentTarget.style.color = 'var(--text)' }}
-              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
-            >
-              {icon}
-            </button>
-          ))}
-        </div>
+        {/* Action buttons — hide on very small screens if needed */}
+        {!isMobile && (
+          <div style={{ display: 'flex', gap: 4 }}>
+            {[
+              { icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>, title: 'Search' },
+              { icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>, title: 'More' }
+            ].map(({ icon, title }, i) => (
+              <button key={i} title={title} style={{
+                width: 34, height: 34, borderRadius: 10,
+                background: 'transparent', border: 'none',
+                color: 'var(--text-muted)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s'
+              }}
+                onMouseOver={e => { e.currentTarget.style.background = 'var(--hover)'; e.currentTarget.style.color = 'var(--text)' }}
+                onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Chat Background Pattern */}
+      {/* Messages */}
       <div style={{
-        flex: 1, overflowY: 'auto', padding: '16px 0',
+        flex: 1, overflowY: 'auto', padding: '12px 0',
         backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(79,70,229,0.04) 1px, transparent 0)',
         backgroundSize: '24px 24px'
       }}>
@@ -239,8 +253,7 @@ export default function ChatWindow({ room, profile }) {
             <div style={{
               background: '#fff', padding: '12px 20px', borderRadius: 12,
               fontSize: 13, color: 'var(--text-muted)',
-              border: '1px solid var(--border)',
-              boxShadow: 'var(--shadow-sm)'
+              border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)'
             }}>
               👋 No messages yet. Say hello!
             </div>
@@ -267,26 +280,27 @@ export default function ChatWindow({ room, profile }) {
       {/* Input Area */}
       <div style={{
         background: 'var(--header-bg)',
-        padding: '12px 16px',
+        padding: isMobile ? '10px 12px' : '12px 16px',
         borderTop: '1px solid var(--border)',
-        display: 'flex', alignItems: 'flex-end', gap: 10, flexShrink: 0
+        display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0,
+        // Safe area for mobile browsers with home bar
+        paddingBottom: isMobile ? 'max(10px, env(safe-area-inset-bottom))' : '12px'
       }}>
         <input type="file" ref={fileRef} onChange={handleFileUpload} style={{ display: 'none' }} />
-        
+
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
           title="Attach file"
           style={{
-            width: 40, height: 40, borderRadius: 12,
+            width: isMobile ? 44 : 40, height: isMobile ? 44 : 40,
+            borderRadius: 12,
             background: 'var(--hover)', border: '1.5px solid var(--border)',
             color: uploading ? 'var(--primary)' : 'var(--text-muted)',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            transition: 'all 0.15s'
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, transition: 'all 0.15s'
           }}
-          onMouseOver={e => { e.currentTarget.style.background = 'var(--primary-light)'; e.currentTarget.style.color = 'var(--primary)'; e.currentTarget.style.borderColor = 'var(--primary)' }}
-          onMouseOut={e => { e.currentTarget.style.background = 'var(--hover)'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
         >
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
             <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
@@ -313,8 +327,10 @@ export default function ChatWindow({ room, profile }) {
             rows={1}
             style={{
               flex: 1, background: 'none', border: 'none', outline: 'none',
-              color: 'var(--text)', resize: 'none', fontSize: 14,
-              padding: '11px 14px', lineHeight: 1.5, maxHeight: 140,
+              color: 'var(--text)', resize: 'none',
+              fontSize: isMobile ? 15 : 14,
+              padding: isMobile ? '12px 14px' : '11px 14px',
+              lineHeight: 1.5, maxHeight: 120,
               fontFamily: 'inherit', overflowY: 'auto'
             }}
           />
@@ -324,7 +340,8 @@ export default function ChatWindow({ room, profile }) {
         <button
           onClick={text.trim() ? handleSend : undefined}
           style={{
-            width: 42, height: 42, borderRadius: 13,
+            width: isMobile ? 46 : 42, height: isMobile ? 46 : 42,
+            borderRadius: 13,
             background: text.trim()
               ? 'linear-gradient(135deg, var(--primary), #7c3aed)'
               : 'var(--hover)',
@@ -333,7 +350,6 @@ export default function ChatWindow({ room, profile }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             transition: 'all 0.2s',
             boxShadow: text.trim() ? '0 4px 12px rgba(79,70,229,0.35)' : 'none',
-            transform: text.trim() ? 'scale(1)' : 'scale(0.95)'
           }}
         >
           {text.trim() ? (
