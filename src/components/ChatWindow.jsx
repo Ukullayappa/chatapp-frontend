@@ -17,6 +17,13 @@ function groupMessagesByDate(messages) {
   return groups
 }
 
+function avatarColor(name) {
+  const colors = ['#4f46e5','#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777']
+  let h = 0
+  for (let i = 0; i < (name?.length || 0); i++) h = (h * 31 + name.charCodeAt(i)) % colors.length
+  return colors[h]
+}
+
 export default function ChatWindow({ room, profile }) {
   const { messages, loading, sendMessage } = useMessages(room?.id)
   const { onlineUsers } = useOnlineUsers()
@@ -37,11 +44,11 @@ export default function ChatWindow({ room, profile }) {
     if (!room) return
     const token = localStorage.getItem('chatapp_token')
     const socket = getSocket(token)
-    function onUserTyping({ userId, username }) {
+    const onUserTyping = ({ userId, username }) => {
       if (userId === profile?.id) return
       setTypingUsers(prev => prev.includes(username) ? prev : [...prev, username])
     }
-    function onUserStoppedTyping({ username }) {
+    const onUserStoppedTyping = ({ username }) => {
       setTypingUsers(prev => prev.filter(u => u !== username))
     }
     socket.on('user_typing', onUserTyping)
@@ -95,87 +102,158 @@ export default function ChatWindow({ room, profile }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
-  function avatarColor(name) {
-    const colors = ['#00a884','#25d366','#128c7e','#ef9c0d','#f15c6d','#34b7f1','#9c59d1']
-    let h = 0
-    for (let i = 0; i < (name?.length || 0); i++) h = (h * 31 + name.charCodeAt(i)) % colors.length
-    return colors[h]
-  }
-
   if (!room) {
     return (
       <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--wa-chat-bg)', borderLeft: '1px solid var(--wa-border)'
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        background: 'var(--chat-bg)',
       }}>
-        <div style={{ textAlign: 'center', maxWidth: '320px' }}>
-          <div style={{ fontSize: '80px', marginBottom: '24px', opacity: 0.1 }}>💬</div>
-          <h2 style={{ color: 'var(--wa-text)', fontWeight: 300, fontSize: '32px', marginBottom: '16px' }}>WhatsApp Web</h2>
-          <p style={{ color: 'var(--wa-text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
-            Select a chat from the left to start messaging
+        <div style={{ textAlign: 'center', maxWidth: 340 }}>
+          <div style={{
+            width: 80, height: 80, borderRadius: 24,
+            background: 'linear-gradient(135deg, var(--primary), #7c3aed)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 24px',
+            boxShadow: '0 8px 32px rgba(79,70,229,0.3)'
+          }}>
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="white">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+            </svg>
+          </div>
+          <h2 style={{ fontWeight: 700, fontSize: 22, color: 'var(--text)', marginBottom: 10, letterSpacing: '-0.02em' }}>
+            Select a Room
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>
+            Choose a room from the sidebar to start chatting with your team.
           </p>
+          <div style={{
+            marginTop: 24, display: 'flex', gap: 16, justifyContent: 'center'
+          }}>
+            {['💬','🚀','✨'].map((emoji, i) => (
+              <div key={i} style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: '#fff', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: 20,
+                boxShadow: 'var(--shadow-sm)',
+                border: '1px solid var(--border)'
+              }}>
+                {emoji}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )
   }
 
+  const color = avatarColor(room.name)
   const grouped = groupMessagesByDate(messages)
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--wa-chat-bg)', height: '100vh' }}>
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      background: 'var(--chat-bg)', height: '100vh', overflow: 'hidden'
+    }}>
       {/* Header */}
       <div style={{
-        background: 'var(--wa-header-bg)',
-        padding: '10px 16px',
-        display: 'flex', alignItems: 'center', gap: '12px',
-        height: '59px', flexShrink: 0, borderBottom: '1px solid var(--wa-border)'
+        background: 'var(--header-bg)',
+        padding: '12px 20px',
+        display: 'flex', alignItems: 'center', gap: 14,
+        flexShrink: 0,
+        borderBottom: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-sm)'
       }}>
         <div style={{
-          width: 40, height: 40, borderRadius: '50%',
-          background: avatarColor(room.name),
+          width: 42, height: 42, borderRadius: 14,
+          background: `linear-gradient(135deg, ${color}cc, ${color})`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontWeight: 700, fontSize: '16px', flexShrink: 0
+          color: '#fff', fontWeight: 700, fontSize: 16, flexShrink: 0,
+          boxShadow: `0 4px 12px ${color}40`
         }}>
           {room.name[0]?.toUpperCase()}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ color: 'var(--wa-text)', fontWeight: 600, fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {room.name}
           </div>
-          <div style={{ color: 'var(--wa-green)', fontSize: '12px' }}>
-            {typingUsers.length > 0
-              ? `${typingUsers.join(', ')} ${typingUsers.length === 1 ? 'is' : 'are'} typing...`
-              : room.description || 'Group chat'}
+          <div style={{ fontSize: 12, color: typingUsers.length > 0 ? 'var(--primary)' : 'var(--text-muted)', marginTop: 1, height: 16 }}>
+            {typingUsers.length > 0 ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ display: 'flex', gap: 2 }}>
+                  {[0, 0.2, 0.4].map((delay, i) => (
+                    <span key={i} style={{
+                      width: 4, height: 4, borderRadius: '50%', background: 'var(--primary)',
+                      display: 'inline-block',
+                      animation: `blink 1.2s ${delay}s infinite`
+                    }} />
+                  ))}
+                </span>
+                {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing
+              </span>
+            ) : (
+              room.description || 'Group room'
+            )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '4px' }}>
+
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: 4 }}>
           {[
-            <svg key="s" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M15.009 13.805h-.636l-.22-.219a5.184 5.184 0 0 0 1.256-3.386 5.207 5.207 0 1 0-5.207 5.208 5.183 5.183 0 0 0 3.385-1.255l.221.22v.635l4.004 3.999 1.194-1.195-3.997-4.007zm-4.808 0a3.605 3.605 0 1 1 0-7.21 3.605 3.605 0 0 1 0 7.21z"/></svg>,
-            <svg key="m" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"/></svg>
-          ].map((icon, i) => (
-            <button key={i} style={{ background: 'none', border: 'none', color: 'var(--wa-text-muted)', cursor: 'pointer', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center' }}>
+            { icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>, title: 'Search' },
+            { icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>, title: 'More' }
+          ].map(({ icon, title }, i) => (
+            <button key={i} title={title} style={{
+              width: 34, height: 34, borderRadius: 10,
+              background: 'transparent', border: 'none',
+              color: 'var(--text-muted)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.15s'
+            }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--hover)'; e.currentTarget.style.color = 'var(--text)' }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
+            >
               {icon}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
+      {/* Chat Background Pattern */}
+      <div style={{
+        flex: 1, overflowY: 'auto', padding: '16px 0',
+        backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(79,70,229,0.04) 1px, transparent 0)',
+        backgroundSize: '24px 24px'
+      }}>
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '40px' }}>
-            <div style={{ width: 28, height: 28, border: '3px solid var(--wa-green)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: 60, flexDirection: 'column', gap: 12 }}>
+            <div style={{
+              width: 32, height: 32, border: '3px solid var(--border)',
+              borderTopColor: 'var(--primary)', borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }} />
+            <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Loading messages...</p>
           </div>
         ) : messages.length === 0 ? (
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '30px' }}>
-            <div style={{ background: 'var(--wa-panel-bg)', color: 'var(--wa-text-muted)', padding: '8px 16px', borderRadius: '8px', fontSize: '13px' }}>
-              No messages yet. Say hello! 👋
+          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
+            <div style={{
+              background: '#fff', padding: '12px 20px', borderRadius: 12,
+              fontSize: 13, color: 'var(--text-muted)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-sm)'
+            }}>
+              👋 No messages yet. Say hello!
             </div>
           </div>
         ) : (
           grouped.map((item, i) => item.type === 'date' ? (
-            <div key={`d-${i}`} style={{ display: 'flex', justifyContent: 'center', margin: '12px 0' }}>
-              <div style={{ background: 'var(--wa-panel-bg)', color: 'var(--wa-text-muted)', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500 }}>
+            <div key={`d-${i}`} style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px' }}>
+              <div style={{
+                background: '#fff', color: 'var(--text-muted)',
+                padding: '5px 14px', borderRadius: 20, fontSize: 11,
+                fontWeight: 600, boxShadow: 'var(--shadow-sm)',
+                border: '1px solid var(--border)', letterSpacing: '0.02em'
+              }}>
                 {item.label}
               </div>
             </div>
@@ -186,58 +264,89 @@ export default function ChatWindow({ room, profile }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
+      {/* Input Area */}
       <div style={{
-        background: 'var(--wa-header-bg)', padding: '10px 16px',
-        display: 'flex', alignItems: 'flex-end', gap: '10px', flexShrink: 0
+        background: 'var(--header-bg)',
+        padding: '12px 16px',
+        borderTop: '1px solid var(--border)',
+        display: 'flex', alignItems: 'flex-end', gap: 10, flexShrink: 0
       }}>
         <input type="file" ref={fileRef} onChange={handleFileUpload} style={{ display: 'none' }} />
-        <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
-          style={{ background: 'none', border: 'none', color: uploading ? 'var(--wa-green)' : 'var(--wa-text-muted)', cursor: 'pointer', padding: '8px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-            <path d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 0 0 3.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.098-.097-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 0 1-2.829 1.171 3.975 3.975 0 0 1-2.83-1.173 3.973 3.973 0 0 1-1.172-2.828c0-1.071.415-2.076 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 0 0-.834.018L3.458 11.58a5.567 5.567 0 0 0-1.642 3.976z"/>
+        
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          title="Attach file"
+          style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: 'var(--hover)', border: '1.5px solid var(--border)',
+            color: uploading ? 'var(--primary)' : 'var(--text-muted)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            transition: 'all 0.15s'
+          }}
+          onMouseOver={e => { e.currentTarget.style.background = 'var(--primary-light)'; e.currentTarget.style.color = 'var(--primary)'; e.currentTarget.style.borderColor = 'var(--primary)' }}
+          onMouseOut={e => { e.currentTarget.style.background = 'var(--hover)'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
           </svg>
         </button>
 
-        <button style={{ background: 'none', border: 'none', color: 'var(--wa-text-muted)', cursor: 'pointer', padding: '8px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-            <path d="M9.153 11.603c.795 0 1.44-.88 1.44-1.962s-.645-1.96-1.44-1.96c-.795 0-1.44.88-1.44 1.96s.645 1.965 1.44 1.965zM5.95 12.965c-.027.271.266.569.542.455.547-.23 1.607-.36 2.508-.36.902 0 1.96.13 2.508.36.276.115.57-.184.542-.455-.105-1.016-.68-1.964-1.857-2.38a4.163 4.163 0 0 0-1.387-.236c-.482 0-.976.081-1.39.236-1.175.416-1.751 1.364-1.856 2.38zm11.035-1.362c.795 0 1.44-.88 1.44-1.962s-.645-1.96-1.44-1.96c-.795 0-1.44.88-1.44 1.96s.645 1.965 1.44 1.965zm1.949 1.713a4.175 4.175 0 0 0-1.387-.236c-.482 0-.976.081-1.39.236-1.175.416-1.75 1.363-1.857 2.38-.026.27.267.568.543.454.547-.23 1.606-.36 2.508-.36.902 0 1.96.13 2.508.36.276.114.57-.184.542-.455-.105-1.016-.68-1.964-1.857-2.38zm-4.626 5.559c-1.525 0-3.015-.512-3.839-1.359a.245.245 0 0 0-.36.331c.98 1.036 2.653 1.72 4.199 1.72 1.545 0 3.219-.684 4.199-1.72a.245.245 0 0 0-.36-.33c-.825.847-2.315 1.358-3.839 1.358zM12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22.786C6.048 22.786 1.214 17.953 1.214 12 1.214 6.048 6.048 1.214 12 1.214c5.953 0 10.786 4.834 10.786 10.786 0 5.953-4.833 10.786-10.786 10.786z"/>
-          </svg>
-        </button>
-
-        <div style={{ flex: 1, background: 'var(--wa-input-bg)', borderRadius: '10px', display: 'flex', alignItems: 'flex-end' }}>
+        {/* Text input */}
+        <div style={{
+          flex: 1,
+          background: 'var(--input-bg)',
+          borderRadius: 14, border: '1.5px solid var(--border)',
+          display: 'flex', alignItems: 'flex-end',
+          transition: 'border-color 0.2s'
+        }}
+          onFocusCapture={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+          onBlurCapture={e => e.currentTarget.style.borderColor = 'var(--border)'}
+        >
           <textarea
             ref={textareaRef}
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message"
+            placeholder="Type a message..."
             rows={1}
             style={{
               flex: 1, background: 'none', border: 'none', outline: 'none',
-              color: 'var(--wa-text)', resize: 'none', fontSize: '15px',
-              padding: '11px 14px', lineHeight: 1.5, maxHeight: '140px',
+              color: 'var(--text)', resize: 'none', fontSize: 14,
+              padding: '11px 14px', lineHeight: 1.5, maxHeight: 140,
               fontFamily: 'inherit', overflowY: 'auto'
             }}
           />
         </div>
 
-        <button onClick={text.trim() ? handleSend : undefined} style={{
-          width: 44, height: 44, borderRadius: '50%', background: 'var(--wa-green)',
-          border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-        }}>
+        {/* Send button */}
+        <button
+          onClick={text.trim() ? handleSend : undefined}
+          style={{
+            width: 42, height: 42, borderRadius: 13,
+            background: text.trim()
+              ? 'linear-gradient(135deg, var(--primary), #7c3aed)'
+              : 'var(--hover)',
+            border: text.trim() ? 'none' : '1.5px solid var(--border)',
+            cursor: text.trim() ? 'pointer' : 'default',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            transition: 'all 0.2s',
+            boxShadow: text.trim() ? '0 4px 12px rgba(79,70,229,0.35)' : 'none',
+            transform: text.trim() ? 'scale(1)' : 'scale(0.95)'
+          }}
+        >
           {text.trim() ? (
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff">
-              <path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="white">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff">
-              <path d="M11.999 14.942c2.001 0 3.531-1.53 3.531-3.531V4.35c0-2.001-1.53-3.531-3.531-3.531S8.468 2.35 8.468 4.35v7.061c0 2.001 1.53 3.531 3.531 3.531zm6.238-3.53c0 3.531-2.942 6.002-6.237 6.002s-6.237-2.471-6.237-6.002H3.761c0 3.884 3.001 7.129 6.943 7.766v3.089h2.588v-3.089c3.942-.637 6.943-3.882 6.943-7.766h-2.001z"/>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--text-subtle)">
+              <path d="M12 15c1.66 0 2.99-1.34 2.99-3L15 6c0-1.66-1.34-3-3-3S9 4.34 9 6v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 15 6.7 12H5c0 3.42 2.72 6.23 6 6.72V22h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
             </svg>
           )}
         </button>
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
